@@ -11,9 +11,16 @@
     "test": "echo \"no tests in apps/web yet\""
   },
   "dependencies": {
+    "@lemonsqueezy/lemonsqueezy.js": "^4.0.0",
+    "@rivalwatch/config": "workspace:*",
+    "@rivalwatch/core": "workspace:*",
+    "@rivalwatch/db": "workspace:*",
+    "better-auth": "^1.6.23",
+    "clsx": "^2.1.1",
     "next": "^15.5.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "tailwind-merge": "^2.5.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.0.0",

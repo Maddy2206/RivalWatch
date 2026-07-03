@@ -18,8 +18,8 @@ product; the dashboard is a shell around it.
 | `apps/worker`     | BullMQ queue consumers + cron scheduler                     |
 | `packages/core`   | Pure logic: extract, diff, noise gate, hash, robots, errors |
 | `packages/db`     | Drizzle schema + query helpers + plan limits                |
-| `packages/llm`    | Anthropic gateway + prompts + evals (sole SDK import)       |
-| `packages/emails` | React Email templates (Phase 3)                             |
+| `packages/llm`    | Multi-provider gateway (anthropic/gemini/groq) + prompts + evals |
+| `packages/emails` | React Email templates (plain HTML/JSX, no SDK — apps/worker sends) |
 | `packages/config` | Zod-validated env                                           |
 
 ### 2.2 System diagram
@@ -53,16 +53,16 @@ product; the dashboard is a shell around it.
               severity ≥4 pricing/packaging
                        │
                        ▼
-                 ┌────────────┐   instant alert email (Phase 3: Resend);
-                 │   alert    │   Phase 1 records to alerts table
+                 ┌────────────┐   records alerts row, emails workspace owner
+                 │   alert    │   via apps/worker/src/email.ts (Resend)
                  └────────────┘
                        ┆
-                 ┌────────────┐   weekly cron per workspace: LLM synthesis
-                 │   brief    │   of the week's changes → briefs table
-                 └─────┬──────┘   (Phase 3)
+                 ┌────────────┐   hourly scheduler tick, ≤1 per workspace per
+                 │   brief    │   7 days: LLM synthesis of the week's classified
+                 └─────┬──────┘   changes → briefs table
                        ▼
-                 ┌────────────┐   Resend email via packages/emails
-                 │  deliver   │   (Phase 3)
+                 ┌────────────┐   Resend email via packages/emails templates +
+                 │  deliver   │   apps/worker/src/email.ts
                  └────────────┘
 ```
 
@@ -71,11 +71,20 @@ logged to the `llm_calls` table with tokens + cost.
 
 ## 3. Roadmap
 
-- **Phase 1 (current):** monorepo scaffold, config, db schema, core
-  extract/diff/noise-gate with fixture tests, llm gateway + classify + evals,
-  worker pipeline crawl→classify, minimal web shell.
-- **Phase 2:** better-auth, dashboard (competitors, tracked pages, change feed,
-  degraded-page surfacing), server actions.
-- **Phase 3:** packages/emails, weekly brief queue + prompt, Resend delivery,
-  instant alerts.
-- **Phase 4:** Lemon Squeezy checkout + webhooks, plan enforcement UI.
+- **Phase 1 (done):** monorepo scaffold, config, db schema, core
+  extract/diff/noise-gate with fixture tests, multi-provider llm gateway
+  (anthropic/gemini/groq) + classify + evals, worker pipeline crawl→classify,
+  minimal web shell.
+- **Phase 2 (done):** better-auth (email/password, drizzle adapter),
+  workspace auto-provisioning (one workspace per signed-in user), dashboard
+  overview (counts, degraded-page banner, recent changes), competitors
+  list/detail pages (incl. delete), tracked-page management
+  (add/pause/reactivate) via server actions, change feed with status filters.
+- **Phase 3 (done):** packages/emails (plain HTML/JSX templates — instant
+  alert + weekly brief), `synthesizeBrief` LLM prompt, `brief`/`deliver`
+  queues, hourly brief scheduler, Resend delivery for both alerts and briefs
+  (apps/worker/src/email.ts), all gated by `hasResendConfigured()`.
+- **Phase 4 (done):** Lemon Squeezy checkout (`apps/web/lib/lemonsqueezy.ts`)
+  + webhook (`app/api/webhooks/ls/route.ts`, HMAC-verified), `/billing`
+  dashboard page (plan, usage bars, upgrade, manage-subscription link),
+  proactive usage indicator on the competitors page.

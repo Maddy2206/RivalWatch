@@ -8,6 +8,27 @@
       "when": 1783080613591,
       "tag": "0000_lonely_the_spike",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1783101916085,
+      "tag": "0001_supreme_scorpion",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1783103194854,
+      "tag": "0002_sparkling_power_pack",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1783106382835,
+      "tag": "0003_lying_korg",
+      "breakpoints": true
     }
   ]
 }

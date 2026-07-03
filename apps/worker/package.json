@@ -17,13 +17,16 @@
     "@rivalwatch/config": "workspace:*",
     "@rivalwatch/core": "workspace:*",
     "@rivalwatch/db": "workspace:*",
+    "@rivalwatch/emails": "workspace:*",
     "@rivalwatch/llm": "workspace:*",
     "bullmq": "^5.34.0",
     "ioredis": "5.10.1",
     "playwright": "^1.49.0",
+    "resend": "^6.17.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@types/react": "^19.2.17",
     "tsx": "^4.22.5",
     "vitest": "^4.1.9"
   }

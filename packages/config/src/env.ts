@@ -21,12 +21,17 @@ const envSchema = z.object({
   GEMINI_API_KEY: optionalString(),
   GROQ_API_KEY: optionalString(),
   RESEND_API_KEY: optionalString(),
+  /** Defaults to Resend's shared onboarding@resend.dev sender if unset (no domain verification needed for dev). */
+  RESEND_FROM_EMAIL: optionalString(),
   R2_ACCOUNT_ID: optionalString(),
   R2_ACCESS_KEY_ID: optionalString(),
   R2_SECRET_ACCESS_KEY: optionalString(),
   R2_BUCKET: optionalString(),
   LEMONSQUEEZY_API_KEY: optionalString(),
   LEMONSQUEEZY_WEBHOOK_SECRET: optionalString(),
+  LEMONSQUEEZY_STORE_ID: optionalString(),
+  LEMONSQUEEZY_STARTER_VARIANT_ID: optionalString(),
+  LEMONSQUEEZY_PRO_VARIANT_ID: optionalString(),
   BETTER_AUTH_SECRET: optionalString(),
   BETTER_AUTH_URL: optionalUrl(),
 
@@ -126,4 +131,20 @@ export function hasLlmProviderConfigured(): boolean {
   } catch {
     return false;
   }
+}
+
+/** True when Resend is usable — gates alert/brief email sending. */
+export function hasResendConfigured(): boolean {
+  return Boolean(loadEnv().RESEND_API_KEY);
+}
+
+/** True when checkout can be created — all three Lemon Squeezy IDs plus the API key must be set. */
+export function hasLemonSqueezyConfigured(): boolean {
+  const env = loadEnv();
+  return Boolean(
+    env.LEMONSQUEEZY_API_KEY &&
+      env.LEMONSQUEEZY_STORE_ID &&
+      env.LEMONSQUEEZY_STARTER_VARIANT_ID &&
+      env.LEMONSQUEEZY_PRO_VARIANT_ID,
+  );
 }

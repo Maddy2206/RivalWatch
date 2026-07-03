@@ -6,4 +6,5 @@ export * from "./queries/snapshots.js";
 export * from "./queries/changes.js";
 export * from "./queries/llm-calls.js";
 export * from "./queries/alerts.js";
+export * from "./queries/briefs.js";
 export * from "./queries/workspaces.js";

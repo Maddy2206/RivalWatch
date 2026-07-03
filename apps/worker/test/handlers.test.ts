@@ -1,11 +1,18 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { handleAlert } from "../src/handlers/alert.js";
+import { handleBrief } from "../src/handlers/brief.js";
 import { handleClassify } from "../src/handlers/classify.js";
 import { handleCrawl } from "../src/handlers/crawl.js";
+import { handleDeliver } from "../src/handlers/deliver.js";
 import { handleDiff } from "../src/handlers/diff.js";
 import { handleExtract } from "../src/handlers/extract.js";
 import { makeFakeDeps } from "./helpers.js";
+
+vi.mock("@rivalwatch/config", () => ({
+  hasResendConfigured: vi.fn(() => true),
+  loadEnv: vi.fn(() => ({ APP_URL: "http://localhost:3000" })),
+}));
 
 vi.mock("@rivalwatch/db", () => ({
   getPageById: vi.fn(),
@@ -24,22 +31,41 @@ vi.mock("@rivalwatch/db", () => ({
   setChangeClassification: vi.fn(async () => {}),
   setChangeError: vi.fn(async () => {}),
   createAlert: vi.fn(),
+  getWorkspaceOwnerEmail: vi.fn(),
+  markAlertSent: vi.fn(async () => {}),
+  getWorkspaceById: vi.fn(),
+  getChangesForWorkspaceInPeriod: vi.fn(),
+  createBrief: vi.fn(),
+  getBriefById: vi.fn(),
+  markBriefSent: vi.fn(async () => {}),
 }));
 
+import { hasResendConfigured } from "@rivalwatch/config";
 import {
   createAlert,
+  createBrief,
+  getBriefById,
   getChangeById,
+  getChangesForWorkspaceInPeriod,
   getPageById,
   getPageContext,
   getPreviousSnapshot,
   getSectionsForSnapshot,
   getSnapshotById,
+  getWorkspaceById,
+  getWorkspaceOwnerEmail,
   insertChanges,
   insertSnapshotWithSections,
   isPageWithinPlan,
+  markAlertSent,
+  markBriefSent,
   pausePage,
   recordPageFailure,
 } from "@rivalwatch/db";
+
+beforeEach(() => {
+  vi.clearAllMocks();
+});
 
 describe("handleCrawl", () => {
   it("skips a paused page", async () => {
@@ -241,20 +267,130 @@ describe("handleClassify", () => {
 });
 
 describe("handleAlert", () => {
-  it("records an alert for a classified change", async () => {
+  it("records an alert and sends email when the workspace has an owner and Resend is configured", async () => {
     const deps = makeFakeDeps();
     vi.mocked(getChangeById).mockResolvedValue({
       id: "c1",
       status: "classified",
       pageId: "p1",
       headline: "Pro price increased",
+      category: "pricing",
+      severity: 5,
+      whyItMatters: "Competitor undercut our pricing",
     } as never);
     vi.mocked(getPageContext).mockResolvedValue({
       workspaceId: "w1",
+      competitorName: "Acme",
     } as never);
     vi.mocked(createAlert).mockResolvedValue({ id: "alert1" } as never);
+    vi.mocked(getWorkspaceOwnerEmail).mockResolvedValue("owner@example.com");
+    vi.mocked(hasResendConfigured).mockReturnValue(true);
 
     await handleAlert(deps, { changeId: "c1" });
+
     expect(createAlert).toHaveBeenCalledWith(deps.db, { workspaceId: "w1", changeId: "c1" });
+    expect(deps.sendAlertEmail).toHaveBeenCalledWith(
+      "owner@example.com",
+      expect.objectContaining({ competitorName: "Acme", headline: "Pro price increased" }),
+    );
+    expect(markAlertSent).toHaveBeenCalledWith(deps.db, "alert1");
+  });
+
+  it("records the alert but skips sending when the workspace has no owner", async () => {
+    const deps = makeFakeDeps();
+    vi.mocked(getChangeById).mockResolvedValue({ id: "c1", status: "classified", pageId: "p1" } as never);
+    vi.mocked(getPageContext).mockResolvedValue({ workspaceId: "w1", competitorName: "Acme" } as never);
+    vi.mocked(createAlert).mockResolvedValue({ id: "alert1" } as never);
+    vi.mocked(getWorkspaceOwnerEmail).mockResolvedValue(undefined);
+
+    await handleAlert(deps, { changeId: "c1" });
+
+    expect(deps.sendAlertEmail).not.toHaveBeenCalled();
+    expect(markAlertSent).not.toHaveBeenCalled();
+  });
+
+  it("records the alert but skips sending when Resend is not configured", async () => {
+    const deps = makeFakeDeps();
+    vi.mocked(getChangeById).mockResolvedValue({ id: "c1", status: "classified", pageId: "p1" } as never);
+    vi.mocked(getPageContext).mockResolvedValue({ workspaceId: "w1", competitorName: "Acme" } as never);
+    vi.mocked(createAlert).mockResolvedValue({ id: "alert1" } as never);
+    vi.mocked(getWorkspaceOwnerEmail).mockResolvedValue("owner@example.com");
+    vi.mocked(hasResendConfigured).mockReturnValue(false);
+
+    await handleAlert(deps, { changeId: "c1" });
+
+    expect(deps.sendAlertEmail).not.toHaveBeenCalled();
+    expect(markAlertSent).not.toHaveBeenCalled();
+  });
+});
+
+describe("handleBrief", () => {
+  it("skips when there are no classified changes this period", async () => {
+    const deps = makeFakeDeps();
+    vi.mocked(getWorkspaceById).mockResolvedValue({ id: "w1", name: "Acme Workspace" } as never);
+    vi.mocked(getChangesForWorkspaceInPeriod).mockResolvedValue([]);
+
+    await handleBrief(deps, { workspaceId: "w1" });
+
+    expect(deps.synthesizeBrief).not.toHaveBeenCalled();
+    expect(createBrief).not.toHaveBeenCalled();
+  });
+
+  it("synthesizes a brief and enqueues delivery when changes exist", async () => {
+    const deps = makeFakeDeps();
+    vi.mocked(getWorkspaceById).mockResolvedValue({ id: "w1", name: "Acme Workspace" } as never);
+    vi.mocked(getChangesForWorkspaceInPeriod).mockResolvedValue([
+      { competitorName: "Rival", headline: "Cut prices", category: "pricing", severity: 5, whyItMatters: "!" },
+    ]);
+    vi.mocked(createBrief).mockResolvedValue({ id: "brief1" } as never);
+
+    await handleBrief(deps, { workspaceId: "w1" });
+
+    expect(deps.synthesizeBrief).toHaveBeenCalled();
+    expect(createBrief).toHaveBeenCalled();
+    expect(deps.enqueued).toEqual([{ queue: "deliver", payload: { briefId: "brief1" } }]);
+  });
+});
+
+describe("handleDeliver", () => {
+  it("sends the brief email and marks it sent", async () => {
+    const deps = makeFakeDeps();
+    vi.mocked(getBriefById).mockResolvedValue({
+      id: "brief1",
+      workspaceId: "w1",
+      periodStart: new Date("2026-01-01"),
+      periodEnd: new Date("2026-01-08"),
+      contentMd: "Narrative.",
+    } as never);
+    vi.mocked(getWorkspaceById).mockResolvedValue({ id: "w1", name: "Acme Workspace" } as never);
+    vi.mocked(getWorkspaceOwnerEmail).mockResolvedValue("owner@example.com");
+    vi.mocked(hasResendConfigured).mockReturnValue(true);
+    vi.mocked(getChangesForWorkspaceInPeriod).mockResolvedValue([]);
+
+    await handleDeliver(deps, { briefId: "brief1" });
+
+    expect(deps.sendBriefEmail).toHaveBeenCalledWith(
+      "owner@example.com",
+      expect.objectContaining({ workspaceName: "Acme Workspace" }),
+    );
+    expect(markBriefSent).toHaveBeenCalledWith(deps.db, "brief1");
+  });
+
+  it("leaves the brief unsent when the workspace has no owner", async () => {
+    const deps = makeFakeDeps();
+    vi.mocked(getBriefById).mockResolvedValue({
+      id: "brief1",
+      workspaceId: "w1",
+      periodStart: new Date("2026-01-01"),
+      periodEnd: new Date("2026-01-08"),
+      contentMd: "Narrative.",
+    } as never);
+    vi.mocked(getWorkspaceById).mockResolvedValue({ id: "w1", name: "Acme Workspace" } as never);
+    vi.mocked(getWorkspaceOwnerEmail).mockResolvedValue(undefined);
+
+    await handleDeliver(deps, { briefId: "brief1" });
+
+    expect(deps.sendBriefEmail).not.toHaveBeenCalled();
+    expect(markBriefSent).not.toHaveBeenCalled();
   });
 });

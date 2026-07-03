@@ -6,7 +6,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./gateway": "./src/gateway.ts",
-    "./prompts/classify-change": "./src/prompts/classify-change.ts"
+    "./prompts/classify-change": "./src/prompts/classify-change.ts",
+    "./prompts/weekly-brief": "./src/prompts/weekly-brief.ts"
   },
   "scripts": {
     "eval": "tsx evals/run.ts",

@@ -16,7 +16,7 @@ pnpm test                    # vitest across packages
 pnpm test:core               # extraction + diffing tests only (fast, run often)
 pnpm eval                    # LLM classification against golden fixtures (needs an LLM_PROVIDER key set)
 pnpm lint && pnpm typecheck  # run both before considering any task done
-docker compose up -d         # local Postgres (5432) + Redis (6379)
+docker compose up -d         # local Postgres (5433) + Redis (6380) — non-default ports, see docker-compose.yml
 ```
 
 To manually trigger pipeline stages in dev: `pnpm worker:trigger crawl --page-id=<id>` (see `apps/worker/src/cli.ts`).
@@ -36,8 +36,15 @@ packages/db         Drizzle schema (src/schema.ts) + query helpers. The only pac
 packages/llm        gateway.ts + prompts/ + evals/ + providers/ (anthropic, gemini,
                     groq — the ONLY place provider SDKs are imported). Every call
                     logs to the llm_calls table.
-packages/emails     React Email templates. Preview: pnpm --filter emails dev.
+packages/emails     React Email templates ONLY — no I/O, no SDK imports (plain
+                    HTML/JSX, not @react-email/components — see the comment in
+                    packages/emails/src/instant-alert.tsx for why). Preview:
+                    pnpm --filter emails dev.
+packages/config     Zod-validated env, feature-gate helpers (hasR2Config,
+                    hasLlmProviderConfigured, hasResendConfigured, etc).
 ```
+
+`apps/worker/src/email.ts` is the ONLY place the `resend` SDK is imported. `apps/web/lib/lemonsqueezy.ts` is the ONLY place `@lemonsqueezy/lemonsqueezy.js` is imported.
 
 ## Invariants (do not violate these)
 
@@ -50,6 +57,8 @@ packages/emails     React Email templates. Preview: pnpm --filter emails dev.
 7. **Prompt changes require running `pnpm eval` and reporting the accuracy delta.** Never edit files in `packages/llm/evals/fixtures/` to make evals pass — fixtures are hand-labeled ground truth.
 8. **Strict JSON from LLMs:** gateway retries once on parse failure, then throws. Downstream code never receives unvalidated LLM output.
 9. **No secrets in code.** Env via `packages/config/env.ts` (zod-validated at boot; fail fast on missing vars).
+10. **Workspace-scoped mutations must verify ownership through the full chain**, not just the leaf ID — e.g. `addTrackedPage` checks the competitor's `workspaceId` matches before inserting, `pausePageAction`/`reactivatePageAction` in `apps/web` check the page's workspace via `getWorkspaceIdForPage` before mutating. A workspace/competitor/page ID passed from a form is not proof of ownership.
+11. **`packages/emails` is templates only — no SDK imports.** The `resend` SDK is only imported in `apps/worker/src/email.ts`; `@lemonsqueezy/lemonsqueezy.js` only in `apps/web/lib/lemonsqueezy.ts`. Both alert and brief email sending are gated by `hasResendConfigured()` — never crash a handler just because `RESEND_API_KEY` is unset, log and skip (same pattern as `hasLlmProviderConfigured()`). Do not add `@react-email/components` back — it and its sub-packages are npm-flagged "no longer supported"; write templates as plain HTML/JSX instead (see `packages/emails/src/instant-alert.tsx`).
 
 ## Conventions
 
@@ -77,9 +86,11 @@ LLM_PROVIDER=auto        # anthropic > gemini > groq priority; see packages/conf
 ANTHROPIC_API_KEY=       # packages/llm only
 GEMINI_API_KEY=          # packages/llm only — default free-tier provider
 GROQ_API_KEY=            # packages/llm only — alternative free-tier provider
-RESEND_API_KEY=
+RESEND_API_KEY=          # apps/worker/src/email.ts only — alert + brief delivery
+RESEND_FROM_EMAIL=       # defaults to Resend's shared onboarding@resend.dev sender
 R2_ACCOUNT_ID= / R2_ACCESS_KEY_ID= / R2_SECRET_ACCESS_KEY= / R2_BUCKET=
 LEMONSQUEEZY_API_KEY= / LEMONSQUEEZY_WEBHOOK_SECRET=
+LEMONSQUEEZY_STORE_ID= / LEMONSQUEEZY_STARTER_VARIANT_ID= / LEMONSQUEEZY_PRO_VARIANT_ID=
 BETTER_AUTH_SECRET= / BETTER_AUTH_URL=
 APP_URL=
 ```
@@ -93,6 +104,7 @@ APP_URL=
 - **Change:** a classified, above-noise difference between two snapshots (category + severity 1–5 + headline + why_it_matters).
 - **Brief:** the weekly LLM-written synthesis of a workspace's changes. severity ≥4 price/plan changes also trigger instant alerts.
 - **Degraded page:** a tracked page failing crawls; shown honestly in the UI, never silently stale.
+- **Workspace ownership:** each signed-in user gets exactly one auto-provisioned workspace (`getOrCreateWorkspaceForOwner`, called from `apps/web/lib/session.ts`'s `requireSession()`). `workspaces.owner_id` is nullable because pipeline/dev-seed workspaces (`apps/worker/src/dev/seed.ts`) have no owner.
 
 ## Working style
 

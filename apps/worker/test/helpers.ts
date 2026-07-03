@@ -1,4 +1,4 @@
-import type { Classification, ClassifyInput } from "@rivalwatch/llm";
+import type { BriefInput, BriefSynthesis, Classification, ClassifyInput } from "@rivalwatch/llm";
 import { vi } from "vitest";
 
 import type { WorkerDeps } from "../src/deps.js";
@@ -31,6 +31,13 @@ export function makeFakeDeps(overrides: Partial<WorkerDeps> = {}): WorkerDeps & 
         why_it_matters: "test reason",
       }),
     ),
+    synthesizeBrief: vi.fn(
+      async (_input: BriefInput): Promise<BriefSynthesis> => ({
+        contentMd: "Test brief narrative.\n\nA strategic takeaway.",
+      }),
+    ),
+    sendAlertEmail: vi.fn(async () => {}),
+    sendBriefEmail: vi.fn(async () => {}),
     log: vi.fn(),
     ...overrides,
   };

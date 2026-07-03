@@ -5,8 +5,10 @@ import IORedis from "ioredis";
 
 import type { WorkerDeps } from "../deps.js";
 import { handleAlert } from "../handlers/alert.js";
+import { handleBrief } from "../handlers/brief.js";
 import { handleClassify } from "../handlers/classify.js";
 import { handleCrawl } from "../handlers/crawl.js";
+import { handleDeliver } from "../handlers/deliver.js";
 import { handleDiff } from "../handlers/diff.js";
 import { handleExtract } from "../handlers/extract.js";
 import { QUEUE_SCHEMAS, type QueueJob, type QueueName } from "./schemas.js";
@@ -34,6 +36,8 @@ export function makeQueues(connection: IORedis): Record<QueueName, Queue> {
     diff: new Queue("diff", options),
     classify: new Queue("classify", options),
     alert: new Queue("alert", options),
+    brief: new Queue("brief", options),
+    deliver: new Queue("deliver", options),
   };
 }
 
@@ -53,6 +57,8 @@ const HANDLERS: Record<QueueName, Handler> = {
   diff: handleDiff as Handler,
   classify: handleClassify as Handler,
   alert: handleAlert as Handler,
+  brief: handleBrief as Handler,
+  deliver: handleDeliver as Handler,
 };
 
 /**

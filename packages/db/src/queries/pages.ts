@@ -55,6 +55,39 @@ export async function getPageContext(db: Db, pageId: string): Promise<PageContex
   return row;
 }
 
+export async function getTrackedPagesForCompetitor(
+  db: Db,
+  competitorId: string,
+): Promise<TrackedPage[]> {
+  return db.select().from(trackedPages).where(eq(trackedPages.competitorId, competitorId));
+}
+
+export interface DegradedPage {
+  pageId: string;
+  url: string;
+  competitorName: string;
+  failureCount: number;
+  lastCrawledAt: Date | null;
+}
+
+/** Degraded pages across a workspace — surfaced honestly in the UI, never silently stale. */
+export async function getDegradedPagesForWorkspace(
+  db: Db,
+  workspaceId: string,
+): Promise<DegradedPage[]> {
+  return db
+    .select({
+      pageId: trackedPages.id,
+      url: trackedPages.url,
+      competitorName: competitors.name,
+      failureCount: trackedPages.failureCount,
+      lastCrawledAt: trackedPages.lastCrawledAt,
+    })
+    .from(trackedPages)
+    .innerJoin(competitors, eq(trackedPages.competitorId, competitors.id))
+    .where(and(eq(competitors.workspaceId, workspaceId), eq(trackedPages.status, "degraded")));
+}
+
 /**
  * Short lease taken when a crawl job is enqueued so the scheduler doesn't
  * re-enqueue the same page every tick; the crawl outcome sets the real next time.

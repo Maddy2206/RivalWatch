@@ -7,16 +7,21 @@
  *   pnpm worker:trigger diff --snapshot-id=<uuid>
  *   pnpm worker:trigger classify --change-id=<uuid>
  *   pnpm worker:trigger alert --change-id=<uuid>
+ *   pnpm worker:trigger brief --workspace-id=<uuid>
+ *   pnpm worker:trigger deliver --brief-id=<uuid>
  */
 import { hasLlmProviderConfigured, loadEnv } from "@rivalwatch/config";
 import { closeDb, getDb } from "@rivalwatch/db";
-import { classifyChange } from "@rivalwatch/llm";
+import { classifyChange, synthesizeBrief } from "@rivalwatch/llm";
 
 import type { WorkerDeps } from "./deps.js";
+import { sendAlertEmail, sendBriefEmail } from "./email.js";
 import { makeFetcher } from "./fetcher.js";
 import { handleAlert } from "./handlers/alert.js";
+import { handleBrief } from "./handlers/brief.js";
 import { handleClassify } from "./handlers/classify.js";
 import { handleCrawl } from "./handlers/crawl.js";
+import { handleDeliver } from "./handlers/deliver.js";
 import { handleDiff } from "./handlers/diff.js";
 import { handleExtract } from "./handlers/extract.js";
 import { RobotsChecker } from "./robots-checker.js";
@@ -40,6 +45,9 @@ async function main(): Promise<void> {
     robots: new RobotsChecker(),
     enqueue: async () => {},
     classify: classifyChange,
+    synthesizeBrief,
+    sendAlertEmail,
+    sendBriefEmail,
     log: (message) => console.log(message),
   };
 
@@ -62,6 +70,10 @@ async function main(): Promise<void> {
         return handleAlert(deps, job.payload);
       case "crawl":
         return handleCrawl(deps, job.payload);
+      case "brief":
+        return handleBrief(deps, job.payload);
+      case "deliver":
+        return handleDeliver(deps, job.payload);
     }
   };
 
@@ -91,8 +103,22 @@ async function main(): Promise<void> {
         await handleAlert(deps, { changeId });
         break;
       }
+      case "brief": {
+        const workspaceId = argValue("workspace-id");
+        if (!workspaceId) throw new Error("brief requires --workspace-id=<uuid>");
+        await handleBrief(deps, { workspaceId });
+        break;
+      }
+      case "deliver": {
+        const briefId = argValue("brief-id");
+        if (!briefId) throw new Error("deliver requires --brief-id=<uuid>");
+        await handleDeliver(deps, { briefId });
+        break;
+      }
       default:
-        console.error("Usage: pnpm worker:trigger <crawl|diff|classify|alert> --<id-flag>=<uuid>");
+        console.error(
+          "Usage: pnpm worker:trigger <crawl|diff|classify|alert|brief|deliver> --<id-flag>=<uuid>",
+        );
         process.exitCode = 1;
     }
   } finally {

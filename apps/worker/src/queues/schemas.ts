@@ -32,12 +32,24 @@ export const alertPayloadSchema = z.object({
 });
 export type AlertPayload = z.infer<typeof alertPayloadSchema>;
 
+export const briefPayloadSchema = z.object({
+  workspaceId: z.string().uuid(),
+});
+export type BriefPayload = z.infer<typeof briefPayloadSchema>;
+
+export const deliverPayloadSchema = z.object({
+  briefId: z.string().uuid(),
+});
+export type DeliverPayload = z.infer<typeof deliverPayloadSchema>;
+
 export const QUEUE_SCHEMAS = {
   crawl: crawlPayloadSchema,
   extract: extractPayloadSchema,
   diff: diffPayloadSchema,
   classify: classifyPayloadSchema,
   alert: alertPayloadSchema,
+  brief: briefPayloadSchema,
+  deliver: deliverPayloadSchema,
 } as const;
 
 export type QueueName = keyof typeof QUEUE_SCHEMAS;
@@ -47,4 +59,6 @@ export type QueueJob =
   | { queue: "extract"; payload: ExtractPayload }
   | { queue: "diff"; payload: DiffPayload }
   | { queue: "classify"; payload: ClassifyPayload }
-  | { queue: "alert"; payload: AlertPayload };
+  | { queue: "alert"; payload: AlertPayload }
+  | { queue: "brief"; payload: BriefPayload }
+  | { queue: "deliver"; payload: DeliverPayload };

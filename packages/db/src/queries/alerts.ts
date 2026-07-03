@@ -1,3 +1,5 @@
+import { eq } from "drizzle-orm";
+
 import type { Db } from "../client.js";
 import { alerts } from "../schema.js";
 
@@ -17,4 +19,8 @@ export async function createAlert(
     .returning();
   if (!row) throw new Error("alert insert returned no row");
   return row;
+}
+
+export async function markAlertSent(db: Db, alertId: string): Promise<void> {
+  await db.update(alerts).set({ sentAt: new Date() }).where(eq(alerts.id, alertId));
 }
