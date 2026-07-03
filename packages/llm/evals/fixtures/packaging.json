@@ -1,0 +1,41 @@
+[
+  {
+    "name": "feature-moved-to-higher-tier",
+    "input": {
+      "competitorName": "Acme",
+      "pageKind": "pricing",
+      "pageUrl": "https://acme.example/pricing",
+      "heading": "Plans",
+      "sectionKind": "pricing_table",
+      "changeType": "modified",
+      "diffSummary": "Pro | $29/mo | 10 projects | [-API access-] Team | $79/mo | Unlimited projects | {+API access+} | SSO"
+    },
+    "expected": { "category": "packaging", "severity": 4 }
+  },
+  {
+    "name": "new-tier-added",
+    "input": {
+      "competitorName": "ShipMate",
+      "pageKind": "pricing",
+      "pageUrl": "https://shipmate.example/pricing",
+      "heading": "Plans",
+      "sectionKind": "pricing_table",
+      "changeType": "modified",
+      "diffSummary": "Pro | $49/mo | 25 seats {+Scale | $149/mo | 100 seats | Priority support | SLA+} Enterprise | Custom"
+    },
+    "expected": { "category": "packaging", "severity": 4 }
+  },
+  {
+    "name": "usage-limit-tightened",
+    "input": {
+      "competitorName": "Hookdeck-like",
+      "pageKind": "pricing",
+      "pageUrl": "https://hooks.example/pricing",
+      "heading": "Plans",
+      "sectionKind": "pricing_table",
+      "changeType": "modified",
+      "diffSummary": "Starter | $19/mo | [-100k events/mo-] {+50k events/mo+} | 3 integrations"
+    },
+    "expected": { "category": "packaging", "severity": 4 }
+  }
+]

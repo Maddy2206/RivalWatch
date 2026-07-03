@@ -1,0 +1,24 @@
+{
+  "name": "@rivalwatch/core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./extract": "./src/extract.ts",
+    "./diff": "./src/diff.ts",
+    "./noise-gate": "./src/noise-gate.ts",
+    "./hash": "./src/hash.ts",
+    "./robots": "./src/robots.ts",
+    "./errors": "./src/errors.ts",
+    "./types": "./src/types.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "node-html-parser": "^8.0.4",
+    "zod": "^4.4.3"
+  }
+}

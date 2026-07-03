@@ -1,0 +1,80 @@
+[
+  {
+    "name": "repositioning-to-enterprise",
+    "input": {
+      "competitorName": "Notably",
+      "pageKind": "home",
+      "pageUrl": "https://notably.example/",
+      "heading": null,
+      "sectionKind": "text",
+      "changeType": "modified",
+      "diffSummary": "[-The note-taking app for indie makers.-] {+The knowledge platform trusted by enterprise teams.+}"
+    },
+    "expected": { "category": "messaging", "severity": 4 }
+  },
+  {
+    "name": "tagline-polish",
+    "input": {
+      "competitorName": "Notably",
+      "pageKind": "home",
+      "pageUrl": "https://notably.example/",
+      "heading": null,
+      "sectionKind": "text",
+      "changeType": "modified",
+      "diffSummary": "Capture ideas [-quickly-] {+instantly+} and never lose a thought."
+    },
+    "expected": { "category": "messaging", "severity": 1 }
+  },
+  {
+    "name": "new-comparison-blog-post",
+    "input": {
+      "competitorName": "MailWhale",
+      "pageKind": "blog",
+      "pageUrl": "https://mailwhale.example/blog",
+      "heading": "Latest posts",
+      "sectionKind": "text",
+      "changeType": "modified",
+      "diffSummary": "Latest posts {+MailWhale vs Resend: an honest comparison for developers+} How we scaled to 10M emails/day"
+    },
+    "expected": { "category": "content", "severity": 3 }
+  },
+  {
+    "name": "testimonial-swap",
+    "input": {
+      "competitorName": "MailWhale",
+      "pageKind": "home",
+      "pageUrl": "https://mailwhale.example/",
+      "heading": "Loved by developers",
+      "sectionKind": "text",
+      "changeType": "modified",
+      "diffSummary": "Loved by developers [-\"Great tool\" — Sam, indie hacker-] {+\"MailWhale replaced our whole email stack\" — CTO, Series B startup+}"
+    },
+    "expected": { "category": "content", "severity": 2 }
+  },
+  {
+    "name": "terms-of-service-data-clause",
+    "input": {
+      "competitorName": "CloudPipe",
+      "pageKind": "custom",
+      "pageUrl": "https://cloudpipe.example/terms",
+      "heading": "Data usage",
+      "sectionKind": "text",
+      "changeType": "modified",
+      "diffSummary": "Data usage We process your data to provide the service. {+We may use aggregated, anonymized usage data to train machine learning models.+}"
+    },
+    "expected": { "category": "legal", "severity": 3 }
+  },
+  {
+    "name": "soc2-compliance-claim",
+    "input": {
+      "competitorName": "CloudPipe",
+      "pageKind": "home",
+      "pageUrl": "https://cloudpipe.example/",
+      "heading": "Security",
+      "sectionKind": "text",
+      "changeType": "modified",
+      "diffSummary": "Security Your data is encrypted at rest and in transit. {+CloudPipe is now SOC 2 Type II certified.+}"
+    },
+    "expected": { "category": "legal", "severity": 3 }
+  }
+]

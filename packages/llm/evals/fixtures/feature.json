@@ -1,0 +1,54 @@
+[
+  {
+    "name": "new-integration-announced",
+    "input": {
+      "competitorName": "TaskFlow",
+      "pageKind": "features",
+      "pageUrl": "https://taskflow.example/features",
+      "heading": "Integrations",
+      "sectionKind": "text",
+      "changeType": "modified",
+      "diffSummary": "Integrations Connect TaskFlow with Slack, GitHub, {+Linear, Notion,+} and Zapier."
+    },
+    "expected": { "category": "feature", "severity": 3 }
+  },
+  {
+    "name": "ai-feature-launch",
+    "input": {
+      "competitorName": "SupportHero",
+      "pageKind": "home",
+      "pageUrl": "https://supporthero.example/",
+      "heading": null,
+      "sectionKind": "text",
+      "changeType": "added",
+      "diffSummary": "{+AI Copilot Draft replies automatically from your help center content. Resolve 40% of tickets without a human.+}"
+    },
+    "expected": { "category": "feature", "severity": 4 }
+  },
+  {
+    "name": "feature-quietly-removed",
+    "input": {
+      "competitorName": "FormKit",
+      "pageKind": "features",
+      "pageUrl": "https://formkit.example/features",
+      "heading": "Exports",
+      "sectionKind": "text",
+      "changeType": "removed",
+      "diffSummary": "[-Exports Download responses as CSV, Excel, or push directly to Google Sheets.-]"
+    },
+    "expected": { "category": "feature", "severity": 3 }
+  },
+  {
+    "name": "changelog-minor-improvement",
+    "input": {
+      "competitorName": "DevToolCo",
+      "pageKind": "changelog",
+      "pageUrl": "https://devtool.example/changelog",
+      "heading": "Improvements",
+      "sectionKind": "text",
+      "changeType": "added",
+      "diffSummary": "{+Improved dashboard load times by 30% and fixed dark-mode contrast issues in the sidebar.+}"
+    },
+    "expected": { "category": "feature", "severity": 2 }
+  }
+]

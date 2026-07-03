@@ -1,0 +1,54 @@
+[
+  {
+    "name": "pro-price-increase",
+    "input": {
+      "competitorName": "Acme",
+      "pageKind": "pricing",
+      "pageUrl": "https://acme.example/pricing",
+      "heading": "Plans",
+      "sectionKind": "pricing_table",
+      "changeType": "modified",
+      "diffSummary": "Hobby | $0/mo | 1 project Pro | [-$29/mo-] {+$39/mo+} | 10 projects Team | $79/mo | Unlimited projects"
+    },
+    "expected": { "category": "pricing", "severity": 4 }
+  },
+  {
+    "name": "free-tier-removed",
+    "input": {
+      "competitorName": "Acme",
+      "pageKind": "pricing",
+      "pageUrl": "https://acme.example/pricing",
+      "heading": "Plans",
+      "sectionKind": "pricing_table",
+      "changeType": "modified",
+      "diffSummary": "[-Free | $0/mo | 3 projects | Community support-] {+Starter | $9/mo | 3 projects | Email support+} Pro | $29/mo | 10 projects"
+    },
+    "expected": { "category": "pricing", "severity": 5 }
+  },
+  {
+    "name": "annual-discount-introduced",
+    "input": {
+      "competitorName": "MetricFox",
+      "pageKind": "pricing",
+      "pageUrl": "https://metricfox.example/pricing",
+      "heading": "Pricing",
+      "sectionKind": "text",
+      "changeType": "modified",
+      "diffSummary": "Simple pricing for teams of all sizes. {+Save 20% with annual billing.+}"
+    },
+    "expected": { "category": "pricing", "severity": 3 }
+  },
+  {
+    "name": "enterprise-contact-us-price-published",
+    "input": {
+      "competitorName": "DataLoom",
+      "pageKind": "pricing",
+      "pageUrl": "https://dataloom.example/pricing",
+      "heading": "Plans",
+      "sectionKind": "pricing_table",
+      "changeType": "modified",
+      "diffSummary": "Enterprise | [-Contact us-] {+$499/mo+} | SSO | Audit logs | Dedicated support"
+    },
+    "expected": { "category": "pricing", "severity": 4 }
+  }
+]
